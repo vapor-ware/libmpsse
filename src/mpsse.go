@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"sync"
@@ -127,7 +127,7 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 // TODO - USED
 //   since the C version is just a wrapper around OpenIndex for idx 0, don't wrap the C fn here, just
 //   use idx 0 with the wrapped OpenIndex fn.
-func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description string, serial string) (*Mpsse, error) {
+func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
 	return OpenIndex(vid, pid, mode, frequency, endianess, iface, description, serial, 0)
 }
 
@@ -135,12 +135,12 @@ func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess,
 // FIXME - not used by us (well, it could be .. Open() is just a wrapper for this at idx 0)
 // It is a wrapper for the mpsse C function:
 //     struct mpsse_context *OpenIndex(int vid, int pid, enum modes mode, int freq, int endianess, int interface, const char *description, const char *serial, int index);
-func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description string, serial string, index int) (*Mpsse, error) {
+func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string, index int) (*Mpsse, error) {
 
-	descP := C.CString(description)
+	descP := C.CString(*description)
 	defer C.free(unsafe.Pointer(descP))
 
-	serP := C.CString(serial)
+	serP := C.CString(*serial)
 	defer C.free(unsafe.Pointer(serP))
 
 	ctx := C.OpenIndex(
@@ -370,9 +370,3 @@ func FastRead() {}
 // It is a wrapper for the mpsse C function:
 //     int FastTransfer(struct mpsse_context *mpsse, char *wdata, char *rdata, int size);
 func FastTransfer() {}
-
-
-func main() {
-	MPSSE(I2C, ONE_HUNDRED_KHZ, MSB)
-	fmt.Println("Done!")
-}
