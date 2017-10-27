@@ -90,21 +90,11 @@ type Mpsse struct {
 
 
 
-
-// Once we have the functionality it, this could be setup in a way that is
-// similar to the python lib, namely have an MPSSE struct. A New() fn would
-// act as the initializer (e.g. the current MPSSE fn) and then the actions
-// (read, write, ack, etc) would be part of the struct - would make it a
-// little easier to use, e.g. Write(vec, "\xA1") would be vec.Write("\xA1")
-
-
-
-
 // could probably build in error checking to most of these methods too!
 
 
 
-// TODO - USED -- actually, we don't really need this. we just need to define
+//  we don't really need this. we just need to define
 //  open and possibly perform some of the same logic that MPSSE does. we don't
 //  need this because it opens the first device, but we want to open a specific
 //  device. we should still implement this, but I don't think it will be used
@@ -124,7 +114,6 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 	return d, nil
 }
 
-// TODO - USED
 //   since the C version is just a wrapper around OpenIndex for idx 0, don't wrap the C fn here, just
 //   use idx 0 with the wrapped OpenIndex fn.
 func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
@@ -132,7 +121,6 @@ func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess,
 }
 
 
-// FIXME - not used by us (well, it could be .. Open() is just a wrapper for this at idx 0)
 // It is a wrapper for the mpsse C function:
 //     struct mpsse_context *OpenIndex(int vid, int pid, enum modes mode, int freq, int endianess, int interface, const char *description, const char *serial, int index);
 func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string, index int) (*Mpsse, error) {
@@ -162,7 +150,6 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
@@ -170,7 +157,6 @@ func (m *Mpsse) Close() {
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     const char *ErrorString(struct mpsse_context *mpsse);
 func (m *Mpsse) ErrorString() string {
@@ -180,50 +166,67 @@ func (m *Mpsse) ErrorString() string {
 
 // It is a wrapper for the mpsse C function:
 //     int SetMode(struct mpsse_context *mpsse, int endianess);
-func SetMode() {}
+func (m *Mpsse) SetMode(endianess Endianess) int {
+	return int(C.SetMode(unsafe.Pointer(m.ctx), C.int(endianess)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     void EnableBitmode(struct mpsse_context *mpsse, int tf);
-func EnableBitmode() {}
+func (m *Mpsse) EnableBitmode(tf int) {
+	C.EnableBitmode(unsafe.Pointer(m.ctx), C.int(tf))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int SetClock(struct mpsse_context *mpsse, uint32_t freq);
-func SetClock() {}
+func (m *Mpsse) SetClock(freq uint32) int {
+	return int(C.SetClock(unsafe.Pointer(m.ctx), (C.uint32_t)(freq)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int GetClock(struct mpsse_context *mpsse);
-func GetClock() {}
+func (m *Mpsse) GetClock() int {
+	return int(C.GetClock(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int GetVid(struct mpsse_context *mpsse);
-func GetVid() {}
+func (m *Mpsse) GetVid() int {
+	return int(C.GetVid(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int GetPid(struct mpsse_context *mpsse);
-func GetPid() {}
+func (m *Mpsse) GetPid() int {
+	return int(C.GetPid(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     const char *GetDescription(struct mpsse_context *mpsse);
-func GetDescription() {}
+func (m *Mpsse) GetDescription() string {
+	return C.GoString(C.GetDescription(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int SetLoopback(struct mpsse_context *mpsse, int enable);
-func SetLoopback() {}
+func (m *Mpsse) SetLoopback(enable int) int {
+	return int(C.SetLoopback(unsafe.Pointer(m.ctx), C.int(enable)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     void SetCSIdle(struct mpsse_context *mpsse, int idle);
-func SetCSIdle() {}
+func (m *Mpsse) SetCSIdle(idle int) {
+	C.SetCSIdle(unsafe.Pointer(m.ctx), C.int(idle))
+}
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     int Start(struct mpsse_context *mpsse);
 func (m *Mpsse) Start() int {
@@ -231,7 +234,6 @@ func (m *Mpsse) Start() int {
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) int {
@@ -245,7 +247,6 @@ func (m *Mpsse) Write(data string) int {
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     int Stop(struct mpsse_context *mpsse);
 func (m *Mpsse) Stop() int {
@@ -253,7 +254,6 @@ func (m *Mpsse) Stop() int {
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     int GetAck(struct mpsse_context *mpsse);
 func (m *Mpsse) GetAck() int {
@@ -268,7 +268,6 @@ func (m *Mpsse) SetAck(ack I2C_ACK) {
 }
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     void SendAcks(struct mpsse_context *mpsse);
 func (m *Mpsse) SendAcks() {
@@ -276,7 +275,6 @@ func (m *Mpsse) SendAcks() {
 }
 
 
-// TODO -- USED
 // It is a wrapper for the mpsse C function:
 //     void SendNacks(struct mpsse_context *mpsse);
 func (m *Mpsse) SendNacks() {
@@ -286,10 +284,11 @@ func (m *Mpsse) SendNacks() {
 
 // It is a wrapper for the mpsse C function:
 //     void FlushAfterRead(struct mpsse_context *mpsse, int tf);
-func FlushAfterRead() {}
+func (m *Mpsse) FlushAfterRead(tf int) {
+	C.FlushAfterRead(unsafe.Pointer(m.ctx), C.int(tf))
+}
 
 
-// TODO -- USED
 // It is a wrapper for the mpsse C function:
 //     int PinHigh(struct mpsse_context *mpsse, int pin);
 func (m *Mpsse) PinHigh(pin GPIOPin) int {
@@ -306,37 +305,47 @@ func (m *Mpsse) PinLow(pin GPIOPin) int {
 
 // It is a wrapper for the mpsse C function:
 //     int SetDirection(struct mpsse_context *mpsse, uint8_t direction);
-func SetDirection() {}
+func (m *Mpsse) SetDirection(direction uint8) int {
+	return int(C.SetDirection(unsafe.Pointer(m.ctx), (C.uint8_t)(direction)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int WriteBits(struct mpsse_context *mpsse, char bits, int size);
-func WriteBits() {}
+func (m *Mpsse) WriteBits() {}
 
 
 // It is a wrapper for the mpsse C function:
 //     char ReadBits(struct mpsse_context *mpsse, int size);
-func ReadBits() {}
+func (m *Mpsse) ReadBits() {}
 
 
 // It is a wrapper for the mpsse C function:
 //     int WritePins(struct mpsse_context *mpsse, uint8_t data);
-func WritePins() {}
+func (m *Mpsse) WritePins(data uint8) int {
+	return int(C.WritePins(unsafe.Pointer(m.ctx), (C.uint8_t)(data)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int ReadPins(struct mpsse_context *mpsse);
-func ReadPins() {}
+func (m *Mpsse) ReadPins() int {
+	return int(C.ReadPins(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int PinState(struct mpsse_context *mpsse, int pin, int state);
-func PinState() {}
+func (m *Mpsse) PinState(pin, state int) int {
+	return int(C.PinState(unsafe.Pointer(m.ctx), C.int(pin), C.int(state)))
+}
 
 
 // It is a wrapper for the mpsse C function:
 //     int Tristate(struct mpsse_context *mpsse);
-func Tristate() {}
+func (m *Mpsse) Tristate() int {
+	return int(C.Tristate(unsafe.Pointer(m.ctx)))
+}
 
 
 // It is a wrapper for the mpsse C function:
@@ -344,7 +353,6 @@ func Tristate() {}
 func Version() {}
 
 
-// TODO - USED
 // It is a wrapper for the mpsse C function:
 //     char *Read(struct mpsse_context *mpsse, int size);
 func (m *Mpsse) Read(size int) string {
@@ -354,19 +362,19 @@ func (m *Mpsse) Read(size int) string {
 
 // It is a wrapper for the mpsse C function:
 //     char *Transfer(struct mpsse_context *mpsse, char *data, int size);
-func Transfer() {}
+func (m *Mpsse) Transfer() {}
 
 
 // It is a wrapper for the mpsse C function:
 //     int FastWrite(struct mpsse_context *mpsse, char *data, int size);
-func FastWrite() {}
+func (m *Mpsse) FastWrite() {}
 
 
 // It is a wrapper for the mpsse C function:
 //     int FastRead(struct mpsse_context *mpsse, char *data, int size);
-func FastRead() {}
+func (m *Mpsse) FastRead() {}
 
 
 // It is a wrapper for the mpsse C function:
 //     int FastTransfer(struct mpsse_context *mpsse, char *wdata, char *rdata, int size);
-func FastTransfer() {}
+func (m *Mpsse) FastTransfer() {}
