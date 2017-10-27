@@ -4,6 +4,7 @@ import (
 	"sync"
 	"fmt"
 	"unsafe"
+	"errors"
 )
 
 // #cgo pkg-config: libftdi
@@ -306,8 +307,12 @@ func (m *Mpsse) FlushAfterRead(tf int) {
 
 // It is a wrapper for the mpsse C function:
 //     int PinHigh(struct mpsse_context *mpsse, int pin);
-func (m *Mpsse) PinHigh(pin GPIOPin) int {
-	return int(C.PinHigh(unsafe.Pointer(m.ctx), C.int(pin)))
+func (m *Mpsse) PinHigh(pin GPIOPin) error {
+	status := int(C.PinHigh(unsafe.Pointer(m.ctx), C.int(pin)))
+	if status != 0 {
+		return errors.New(m.ErrorString())
+	}
+	return nil
 }
 
 

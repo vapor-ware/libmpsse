@@ -15,6 +15,12 @@ const (
 	WRITE_REGISTER = "\x6A"
 )
 
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 
 func main() {
 	fmt.Println("Starting test script")
@@ -30,7 +36,7 @@ func main() {
 		panic(err)
 	}
 
-	vec.PinHigh(src.GPIOL0)
+	check(vec.PinHigh(src.GPIOL0))
 	time.Sleep(1 * time.Millisecond)
 
 	vec.Start()
