@@ -20,12 +20,12 @@ func main() {
 	fmt.Println("Starting test script")
 	thermCount := 12
 
-	vec, err := src.Open(0x0403, 0x6011, src.I2C, src.ONE_HUNDRED_KHZ, src.MSB, src.INTERFACE_A, nil, nil)
+	vec, err := src.SimpleOpen(0x0403, 0x6011, src.I2C, src.ONE_HUNDRED_KHZ, src.MSB, src.INTERFACE_A)
 	if err != nil {
 		panic(err)
 	}
 
-	gpio, err := src.Open(0x0403, 0x6011, src.I2C, src.ONE_HUNDRED_KHZ, src.MSB, src.INTERFACE_B, nil, nil)
+	gpio, err := src.SimpleOpen(0x0403, 0x6011, src.I2C, src.ONE_HUNDRED_KHZ, src.MSB, src.INTERFACE_B)
 	if err != nil {
 		panic(err)
 	}

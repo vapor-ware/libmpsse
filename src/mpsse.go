@@ -114,6 +114,21 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 	return d, nil
 }
 
+
+func SimpleOpen(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface) (*Mpsse, error) {
+	ctx := C.SimpleOpen(
+		C.int(vid),
+		C.int(pid),
+		C.enum_modes(mode),
+		C.int(frequency),
+		C.int(endianess),
+		C.int(iface),
+	)
+
+	d := &Mpsse{ctx, true, sync.Mutex{}}
+	return d, nil
+}
+
 //   since the C version is just a wrapper around OpenIndex for idx 0, don't wrap the C fn here, just
 //   use idx 0 with the wrapped OpenIndex fn.
 func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
