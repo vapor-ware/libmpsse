@@ -1,4 +1,4 @@
-package src
+package libmpsse
 
 import (
 	"sync"
@@ -8,6 +8,8 @@ import (
 )
 
 // #cgo pkg-config: libftdi
+// #cgo CFLAGS: -I/usr/local/include/mpsse
+// #cgo LDFLAGS: -lmpsse -L/usr/local/lib
 // #include <stdio.h>
 // #include "mpsse.h"
 import "C"
@@ -116,20 +118,6 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 }
 
 
-func SimpleOpen(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface) (*Mpsse, error) {
-	ctx := C.SimpleOpen(
-		C.int(vid),
-		C.int(pid),
-		C.enum_modes(mode),
-		C.int(frequency),
-		C.int(endianess),
-		C.int(iface),
-	)
-
-	d := &Mpsse{ctx, true, sync.Mutex{}}
-	return d, nil
-}
-
 //   since the C version is just a wrapper around OpenIndex for idx 0, don't wrap the C fn here, just
 //   use idx 0 with the wrapped OpenIndex fn.
 func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
@@ -141,11 +129,22 @@ func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess,
 //     struct mpsse_context *OpenIndex(int vid, int pid, enum modes mode, int freq, int endianess, int interface, const char *description, const char *serial, int index);
 func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string, index int) (*Mpsse, error) {
 
-	descP := C.CString(*description)
-	defer C.free(unsafe.Pointer(descP))
 
-	serP := C.CString(*serial)
-	defer C.free(unsafe.Pointer(serP))
+	var descP *C.char
+	if description == nil {
+		descP = nil
+	} else {
+		descP = C.CString(*description)
+		defer C.free(unsafe.Pointer(descP))
+	}
+
+	var serP *C.char
+	if serial == nil {
+		serP = nil
+	} else {
+		serP = C.CString(*serial)
+		defer C.free(unsafe.Pointer(serP))
+	}
 
 	ctx := C.OpenIndex(
 		C.int(vid),

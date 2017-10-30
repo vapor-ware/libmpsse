@@ -8,6 +8,3 @@ Makefile
 
 libmpsse.a
 libmpsse.so
-
-# go binary
-mpsse
