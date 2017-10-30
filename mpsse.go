@@ -146,7 +146,8 @@ func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess,
 //     struct mpsse_context *OpenIndex(int vid, int pid, enum modes mode, int freq, int endianess, int interface, const char *description, const char *serial, int index);
 func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string, index int) (*Mpsse, error) {
 
-
+	// The description must be passed as a C char pointer. If the
+	// description is nil, we will pass a null pointer.
 	var descP *C.char
 	if description == nil {
 		descP = nil
@@ -155,6 +156,8 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 		defer C.free(unsafe.Pointer(descP))
 	}
 
+	// The serial value must be passed as a C char pointer. If the
+	// description is nil, we will pass a null pointer.
 	var serP *C.char
 	if serial == nil {
 		serP = nil
@@ -175,7 +178,8 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 		C.int(index),
 	)
 
-	// FIXME - should check if ctx ok
+	fmt.Printf("C MPSSE OPEN? %v\n", ctx.open)
+
 
 	d := &Mpsse{ctx, true, sync.Mutex{}}
 	return d, nil
