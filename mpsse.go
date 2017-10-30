@@ -2,9 +2,7 @@ package libmpsse
 
 import (
 	"sync"
-	"fmt"
 	"unsafe"
-	"errors"
 )
 
 // #cgo pkg-config: libftdi
@@ -13,6 +11,15 @@ import (
 // #include <stdio.h>
 // #include "mpsse.h"
 import "C"
+
+
+const (
+	// MpsseOK represents the "ok" response from an MPSSE command.
+	MpsseOK = 0
+
+	// MpsseFail represents the "failed" response from an MPSSE command.
+	MpsseFail = -1
+)
 
 
 // Mode is an integer that is used to identify the MPSSE operating
@@ -115,6 +122,12 @@ type Mpsse struct {
 }
 
 
+// ok is a helper function to check if the response status of an MPSSE command
+// completed successfully.
+func ok(status int) bool {
+	return status == MpsseOK
+}
+
 
 // MPSSE opens and initializes the first FTDI device found.
 //
@@ -123,10 +136,14 @@ type Mpsse struct {
 func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) {
 
 	ctx := C.MPSSE(C.enum_modes(mode), C.int(frequency), C.int(endianess))
-	// FIXME - should check if ok
 	d := &Mpsse{ctx, true, sync.Mutex{}}
 
-	fmt.Printf("device: %+v", d)
+	// on success, mpsse->open will be set to 1. on failure, mpsse-open will be
+	// set to 0.
+	if ctx.open == 0 {
+		return nil, &MpsseError{d.ErrorString()}
+	}
+
 	return d, nil
 }
 
@@ -178,10 +195,14 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 		C.int(index),
 	)
 
-	fmt.Printf("C MPSSE OPEN? %v\n", ctx.open)
-
-
 	d := &Mpsse{ctx, true, sync.Mutex{}}
+
+	// on success, mpsse->open will be set to 1. on failure, mpsse-open will be
+	// set to 0.
+	if ctx.open == 0 {
+		return nil, &MpsseError{d.ErrorString()}
+	}
+
 	return d, nil
 }
 
@@ -210,8 +231,13 @@ func (m *Mpsse) ErrorString() string {
 //
 // It is a wrapper for the mpsse C function:
 //     int SetMode(struct mpsse_context *mpsse, int endianess);
-func (m *Mpsse) SetMode(endianess Endianess) int {
-	return int(C.SetMode(unsafe.Pointer(m.ctx), C.int(endianess)))
+func (m *Mpsse) SetMode(endianess Endianess) error {
+	status := int(C.SetMode(unsafe.Pointer(m.ctx), C.int(endianess)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -229,8 +255,13 @@ func (m *Mpsse) EnableBitmode(tf int) {
 //
 // It is a wrapper for the mpsse C function:
 //     int SetClock(struct mpsse_context *mpsse, uint32_t freq);
-func (m *Mpsse) SetClock(freq uint32) int {
-	return int(C.SetClock(unsafe.Pointer(m.ctx), (C.uint32_t)(freq)))
+func (m *Mpsse) SetClock(freq uint32) error {
+	status := int(C.SetClock(unsafe.Pointer(m.ctx), (C.uint32_t)(freq)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -274,8 +305,13 @@ func (m *Mpsse) GetDescription() string {
 //
 // It is a wrapper for the mpsse C function:
 //     int SetLoopback(struct mpsse_context *mpsse, int enable);
-func (m *Mpsse) SetLoopback(enable int) int {
-	return int(C.SetLoopback(unsafe.Pointer(m.ctx), C.int(enable)))
+func (m *Mpsse) SetLoopback(enable int) error {
+	status := int(C.SetLoopback(unsafe.Pointer(m.ctx), C.int(enable)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -293,8 +329,13 @@ func (m *Mpsse) SetCSIdle(idle int) {
 //
 // It is a wrapper for the mpsse C function:
 //     int Start(struct mpsse_context *mpsse);
-func (m *Mpsse) Start() int {
-	return int(C.Start(unsafe.Pointer(m.ctx)))
+func (m *Mpsse) Start() error {
+	status := int(C.Start(unsafe.Pointer(m.ctx)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -302,14 +343,19 @@ func (m *Mpsse) Start() int {
 //
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
-func (m *Mpsse) Write(data string) int {
+func (m *Mpsse) Write(data string) error {
 	dataP := C.CString(data)
 	defer C.free(unsafe.Pointer(dataP))
 
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
 	// size we want? but I'm also unsure about that. will need to test.
-	return int(C.Write(unsafe.Pointer(m.ctx), dataP, C.int(len(data))))
+	status := int(C.Write(unsafe.Pointer(m.ctx), dataP, C.int(len(data))))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -317,8 +363,13 @@ func (m *Mpsse) Write(data string) int {
 //
 // It is a wrapper for the mpsse C function:
 //     int Stop(struct mpsse_context *mpsse);
-func (m *Mpsse) Stop() int {
-	return int(C.Stop(unsafe.Pointer(m.ctx)))
+func (m *Mpsse) Stop() error {
+	status := int(C.Stop(unsafe.Pointer(m.ctx)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -376,8 +427,9 @@ func (m *Mpsse) FlushAfterRead(tf int) {
 //     int PinHigh(struct mpsse_context *mpsse, int pin);
 func (m *Mpsse) PinHigh(pin GPIOPin) error {
 	status := int(C.PinHigh(unsafe.Pointer(m.ctx), C.int(pin)))
-	if status != 0 {
-		return errors.New(m.ErrorString())
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
 	}
 	return nil
 }
@@ -387,8 +439,13 @@ func (m *Mpsse) PinHigh(pin GPIOPin) error {
 //
 // It is a wrapper for the mpsse C function:
 //     int PinLow(struct mpsse_context *mpsse, int pin);
-func (m *Mpsse) PinLow(pin GPIOPin) int {
-	return int(C.PinLow(unsafe.Pointer(m.ctx), C.int(pin)))
+func (m *Mpsse) PinLow(pin GPIOPin) error {
+	status := int(C.PinLow(unsafe.Pointer(m.ctx), C.int(pin)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -397,8 +454,13 @@ func (m *Mpsse) PinLow(pin GPIOPin) int {
 //
 // It is a wrapper for the mpsse C function:
 //     int SetDirection(struct mpsse_context *mpsse, uint8_t direction);
-func (m *Mpsse) SetDirection(direction uint8) int {
-	return int(C.SetDirection(unsafe.Pointer(m.ctx), (C.uint8_t)(direction)))
+func (m *Mpsse) SetDirection(direction uint8) error {
+	status := int(C.SetDirection(unsafe.Pointer(m.ctx), (C.uint8_t)(direction)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -421,8 +483,13 @@ func (m *Mpsse) ReadBits() {}
 //
 // It is a wrapper for the mpsse C function:
 //     int WritePins(struct mpsse_context *mpsse, uint8_t data);
-func (m *Mpsse) WritePins(data uint8) int {
-	return int(C.WritePins(unsafe.Pointer(m.ctx), (C.uint8_t)(data)))
+func (m *Mpsse) WritePins(data uint8) error {
+	status := int(C.WritePins(unsafe.Pointer(m.ctx), (C.uint8_t)(data)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
@@ -450,8 +517,13 @@ func (m *Mpsse) PinState(pin, state int) int {
 //
 // It is a wrapper for the mpsse C function:
 //     int Tristate(struct mpsse_context *mpsse);
-func (m *Mpsse) Tristate() int {
-	return int(C.Tristate(unsafe.Pointer(m.ctx)))
+func (m *Mpsse) Tristate() error {
+	status := int(C.Tristate(unsafe.Pointer(m.ctx)))
+
+	if !ok(status) {
+		return &MpsseError{m.ErrorString()}
+	}
+	return nil
 }
 
 
