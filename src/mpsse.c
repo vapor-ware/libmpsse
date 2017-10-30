@@ -75,25 +75,6 @@ struct mpsse_context *MPSSE(enum modes mode, int freq, int endianess)
 	return mpsse;
 }
 
-/*
- * Open device by VID/PID with no description or serial.
- *
- * @vid         - Device vendor ID.
- * @pid         - Device product ID.
- * @mode        - MPSSE mode, one of enum modes.
- * @freq        - Clock frequency to use for the specified mode.
- * @endianess   - Specifies how data is clocked in/out (MSB, LSB).
- * @interface   - FTDI interface to use (IFACE_A - IFACE_D).
- *
- * Returns a pointer to an MPSSE context structure.
- * On success, mpsse->open will be set to 1.
- * On failure, mpsse->open will be set to 0.
- */
-struct mpsse_context *SimpleOpen(int vid, int pid, enum modes mode, int freq, int endianess, int interface)
-{
-	return OpenIndex(vid, pid, mode, freq, endianess, interface, NULL, NULL, 0);
-}
-
 /* 
  * Open device by VID/PID
  *

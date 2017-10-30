@@ -15,8 +15,12 @@ import (
 import "C"
 
 
-// modes
+// Mode is an integer that is used to identify the MPSSE operating
+// mode. The values here match the values in the C implementation
+// enum.
 type Mode int
+
+// Supported MPSSE modes.
 const (
 	SPI0 Mode = 1
 	SPI1 Mode = 2
@@ -27,38 +31,51 @@ const (
 	BITBANG Mode = 7
 )
 
-// frequencies
+// Frequency is an integer that is used to identify the clock frequency
+// for the specified mode. These values match up with the frequencies
+// defined in the C implementation.
 type Frequency int
+
+// Common clock rates.
 const (
-	ONE_HUNDRED_KHZ  Frequency = 100000
-	FOUR_HUNDRED_KHZ Frequency = 400000
-	ONE_MHZ          Frequency = 1000000
-	TWO_MHZ          Frequency = 2000000
-	FIVE_MHZ         Frequency = 5000000
-	SIX_MHZ          Frequency = 6000000
-	TEN_MHZ          Frequency = 10000000
-	TWELVE_MHZ       Frequency = 12000000
-	FIFTEEN_MHZ      Frequency = 15000000
-	THIRTY_MHZ       Frequency = 30000000
-	SIXTY_MHZ        Frequency = 60000000
+	OneHundredKHZ   Frequency = 100000
+	FourHundredKHZ  Frequency = 400000
+	OneMHZ          Frequency = 1000000
+	TwoMHZ          Frequency = 2000000
+	FiveMHZ         Frequency = 5000000
+	SixMHZ          Frequency = 6000000
+	TenMHZ          Frequency = 10000000
+	TwelveMHZ       Frequency = 12000000
+	FifteenMHZ      Frequency = 15000000
+	ThirtyMHZ       Frequency = 30000000
+	SixtyMHZ        Frequency = 60000000
 )
 
-// endianess
+// Endianess defines how data is clocked in and out (MSB/LSB). These values
+// match up with the endianess values defined in the C implementation.
 type Endianess int
+
+// Supported endianess values.
 const (
 	MSB Endianess = 0x00
 	LSB Endianess = 0x08
 )
 
-// i2c ack
-type I2C_ACK int
+// I2CAck are the values used to represent ACK and NACK for I2C. These values
+// match up with the I2C ACK values defined in the C implementation.
+type I2CAck int
+
+// Supported I2C ACK values.
 const (
-	ACK  I2C_ACK = 0
-	NACK I2C_ACK = 1
+	ACK  I2CAck = 0
+	NACK I2CAck = 1
 )
 
-// gpio pins
+// GPIOPin is an integer that describes a GPIO pin. These values match up with
+// the values defined in the C implementation.
 type GPIOPin int
+
+// Supported GPIO pin identifiers.
 const (
 	GPIOL0 GPIOPin = 0
 	GPIOL1 GPIOPin = 1
@@ -74,17 +91,23 @@ const (
 	GPIOH7 GPIOPin = 11
 )
 
-// ftdi interfaces
+// Iface is the FTDI interface that should be used. These values match up with
+// the values defined in the C implementation.
 type Iface int
+
+// FTDI interfaces.
 const (
-	INTERFACE_ANY = 0
-	INTERFACE_A   = 1
-	INTERFACE_B   = 2
-	INTERFACE_C   = 3
-	INTERFACE_D   = 4
+	InterfaceAny = 0
+	InterfaceA   = 1
+	InterfaceB   = 2
+	InterfaceC   = 3
+	InterfaceD   = 4
 )
 
 
+// Mpsse is a struct that holds the context information for an MPSSE session.
+// It holds a reference to the C context pointer that is used for all
+// commands.
 type Mpsse struct {
 	ctx  *C.struct_mpsse_context
 	open bool
@@ -93,16 +116,6 @@ type Mpsse struct {
 
 
 
-// could probably build in error checking to most of these methods too!
-
-
-
-//  we don't really need this. we just need to define
-//  open and possibly perform some of the same logic that MPSSE does. we don't
-//  need this because it opens the first device, but we want to open a specific
-//  device. we should still implement this, but I don't think it will be used
-//  for our plugin.
-//
 // MPSSE opens and initializes the first FTDI device found.
 //
 // It is a wrapper for the mpsse C function:
@@ -118,13 +131,17 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 }
 
 
-//   since the C version is just a wrapper around OpenIndex for idx 0, don't wrap the C fn here, just
-//   use idx 0 with the wrapped OpenIndex fn.
+// Open opens a device by VID/PID.
+//
+// Since the C version is a wrapper around OpenIndex for index 0, we just pass
+// index 0 to the OpenIndex function here.
 func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
 	return OpenIndex(vid, pid, mode, frequency, endianess, iface, description, serial, 0)
 }
 
 
+// OpenIndex opens a device by VID/PID/index.
+//
 // It is a wrapper for the mpsse C function:
 //     struct mpsse_context *OpenIndex(int vid, int pid, enum modes mode, int freq, int endianess, int interface, const char *description, const char *serial, int index);
 func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string, index int) (*Mpsse, error) {
@@ -165,6 +182,9 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 }
 
 
+// Close closes the device, deinitializes libftdi, and frees the MPSSE
+// context pointer.
+//
 // It is a wrapper for the mpsse C function:
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
@@ -172,6 +192,8 @@ func (m *Mpsse) Close() {
 }
 
 
+// ErrorString retrieves the last error string from libftdi.
+//
 // It is a wrapper for the mpsse C function:
 //     const char *ErrorString(struct mpsse_context *mpsse);
 func (m *Mpsse) ErrorString() string {
@@ -179,6 +201,9 @@ func (m *Mpsse) ErrorString() string {
 }
 
 
+// SetMode sets the appropriate transmit and receive commands based on the
+// requested mode and byte order.
+//
 // It is a wrapper for the mpsse C function:
 //     int SetMode(struct mpsse_context *mpsse, int endianess);
 func (m *Mpsse) SetMode(endianess Endianess) int {
@@ -186,6 +211,9 @@ func (m *Mpsse) SetMode(endianess Endianess) int {
 }
 
 
+// EnableBitmode enables bit-wise data transfers. Must be called after
+// MPSSE() / Open() / OpenIndex().
+//
 // It is a wrapper for the mpsse C function:
 //     void EnableBitmode(struct mpsse_context *mpsse, int tf);
 func (m *Mpsse) EnableBitmode(tf int) {
@@ -193,6 +221,8 @@ func (m *Mpsse) EnableBitmode(tf int) {
 }
 
 
+// SetClock sets tha appropriate divisor for the desired clock frequency.
+//
 // It is a wrapper for the mpsse C function:
 //     int SetClock(struct mpsse_context *mpsse, uint32_t freq);
 func (m *Mpsse) SetClock(freq uint32) int {
@@ -200,6 +230,8 @@ func (m *Mpsse) SetClock(freq uint32) int {
 }
 
 
+// GetClock gets the currently configured clock rate.
+//
 // It is a wrapper for the mpsse C function:
 //     int GetClock(struct mpsse_context *mpsse);
 func (m *Mpsse) GetClock() int {
@@ -207,6 +239,8 @@ func (m *Mpsse) GetClock() int {
 }
 
 
+// GetVid returns the vendor ID of the FTDI chip.
+//
 // It is a wrapper for the mpsse C function:
 //     int GetVid(struct mpsse_context *mpsse);
 func (m *Mpsse) GetVid() int {
@@ -214,6 +248,8 @@ func (m *Mpsse) GetVid() int {
 }
 
 
+// GetPid returns the product ID of the FTDI chip.
+//
 // It is a wrapper for the mpsse C function:
 //     int GetPid(struct mpsse_context *mpsse);
 func (m *Mpsse) GetPid() int {
@@ -221,6 +257,8 @@ func (m *Mpsse) GetPid() int {
 }
 
 
+// GetDescription returns the description of the FTDI chip, if any.
+//
 // It is a wrapper for the mpsse C function:
 //     const char *GetDescription(struct mpsse_context *mpsse);
 func (m *Mpsse) GetDescription() string {
@@ -228,6 +266,8 @@ func (m *Mpsse) GetDescription() string {
 }
 
 
+// SetLoopback enables or disables internal loopback.
+//
 // It is a wrapper for the mpsse C function:
 //     int SetLoopback(struct mpsse_context *mpsse, int enable);
 func (m *Mpsse) SetLoopback(enable int) int {
@@ -235,6 +275,9 @@ func (m *Mpsse) SetLoopback(enable int) int {
 }
 
 
+// SetCSIdle sets the idle state of the chip select pin. CS idles high
+// by default.
+//
 // It is a wrapper for the mpsse C function:
 //     void SetCSIdle(struct mpsse_context *mpsse, int idle);
 func (m *Mpsse) SetCSIdle(idle int) {
@@ -242,6 +285,8 @@ func (m *Mpsse) SetCSIdle(idle int) {
 }
 
 
+// Start sends the data start condition.
+//
 // It is a wrapper for the mpsse C function:
 //     int Start(struct mpsse_context *mpsse);
 func (m *Mpsse) Start() int {
@@ -249,6 +294,8 @@ func (m *Mpsse) Start() int {
 }
 
 
+// Write sends data out via the selected serial protocol.
+//
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) int {
@@ -262,6 +309,8 @@ func (m *Mpsse) Write(data string) int {
 }
 
 
+// Stop sends the data stop condition.
+//
 // It is a wrapper for the mpsse C function:
 //     int Stop(struct mpsse_context *mpsse);
 func (m *Mpsse) Stop() int {
@@ -269,6 +318,8 @@ func (m *Mpsse) Stop() int {
 }
 
 
+// GetAck returns the last received ACK bit.
+//
 // It is a wrapper for the mpsse C function:
 //     int GetAck(struct mpsse_context *mpsse);
 func (m *Mpsse) GetAck() int {
@@ -276,13 +327,18 @@ func (m *Mpsse) GetAck() int {
 }
 
 
+// SetAck sets the transmitted ACK bit.
+//
 // It is a wrapper for the mpsse C function:
 //     void SetAck(struct mpsse_context *mpsse, int ack);
-func (m *Mpsse) SetAck(ack I2C_ACK) {
+func (m *Mpsse) SetAck(ack I2CAck) {
 	C.SetAck(unsafe.Pointer(m.ctx), C.int(ack))
 }
 
 
+// SendAcks causes libmpsse to send ACKs after each read byte in
+// I2C mode.
+//
 // It is a wrapper for the mpsse C function:
 //     void SendAcks(struct mpsse_context *mpsse);
 func (m *Mpsse) SendAcks() {
@@ -290,6 +346,9 @@ func (m *Mpsse) SendAcks() {
 }
 
 
+// SendNacks causes libmpsse to send NACKs after each read byte in
+// I2C mode.
+//
 // It is a wrapper for the mpsse C function:
 //     void SendNacks(struct mpsse_context *mpsse);
 func (m *Mpsse) SendNacks() {
@@ -297,6 +356,9 @@ func (m *Mpsse) SendNacks() {
 }
 
 
+// FlushAfterRead enables or disables flushing of the FTDI chip's RX
+// buffers after each read operation. Flushing is disabled by default.
+//
 // It is a wrapper for the mpsse C function:
 //     void FlushAfterRead(struct mpsse_context *mpsse, int tf);
 func (m *Mpsse) FlushAfterRead(tf int) {
@@ -304,6 +366,8 @@ func (m *Mpsse) FlushAfterRead(tf int) {
 }
 
 
+// PinHigh sets the specified pin high.
+//
 // It is a wrapper for the mpsse C function:
 //     int PinHigh(struct mpsse_context *mpsse, int pin);
 func (m *Mpsse) PinHigh(pin GPIOPin) error {
@@ -315,6 +379,8 @@ func (m *Mpsse) PinHigh(pin GPIOPin) error {
 }
 
 
+// PinLow sets the specified pin low.
+//
 // It is a wrapper for the mpsse C function:
 //     int PinLow(struct mpsse_context *mpsse, int pin);
 func (m *Mpsse) PinLow(pin GPIOPin) int {
@@ -322,6 +388,9 @@ func (m *Mpsse) PinLow(pin GPIOPin) int {
 }
 
 
+// SetDirection sets ths input/output direction of all pins. For use in
+// BITBANG mode only.
+//
 // It is a wrapper for the mpsse C function:
 //     int SetDirection(struct mpsse_context *mpsse, uint8_t direction);
 func (m *Mpsse) SetDirection(direction uint8) int {
@@ -329,16 +398,23 @@ func (m *Mpsse) SetDirection(direction uint8) int {
 }
 
 
+// WriteBits performs a bit-wise write of up to 8 bits at a time.
+//
 // It is a wrapper for the mpsse C function:
 //     int WriteBits(struct mpsse_context *mpsse, char bits, int size);
 func (m *Mpsse) WriteBits() {}
 
 
+// ReadBits performs a bit-wise read of up to 8 bits.
+//
 // It is a wrapper for the mpsse C function:
 //     char ReadBits(struct mpsse_context *mpsse, int size);
 func (m *Mpsse) ReadBits() {}
 
 
+// WritePins sets the input/output value of all pins. For use in BITBANG
+// mode only.
+//
 // It is a wrapper for the mpsse C function:
 //     int WritePins(struct mpsse_context *mpsse, uint8_t data);
 func (m *Mpsse) WritePins(data uint8) int {
@@ -346,6 +422,9 @@ func (m *Mpsse) WritePins(data uint8) int {
 }
 
 
+// ReadPins reads the state of the chip's pins. For use in BITBANG mode
+// only.
+//
 // It is a wrapper for the mpsse C function:
 //     int ReadPins(struct mpsse_context *mpsse);
 func (m *Mpsse) ReadPins() int {
@@ -353,6 +432,9 @@ func (m *Mpsse) ReadPins() int {
 }
 
 
+// PinState checks if a specific pin is high or low. For use in BITBANG
+// mode only.
+//
 // It is a wrapper for the mpsse C function:
 //     int PinState(struct mpsse_context *mpsse, int pin, int state);
 func (m *Mpsse) PinState(pin, state int) int {
@@ -360,6 +442,8 @@ func (m *Mpsse) PinState(pin, state int) int {
 }
 
 
+// Tristate places all I/O pins into a tristate mode.
+//
 // It is a wrapper for the mpsse C function:
 //     int Tristate(struct mpsse_context *mpsse);
 func (m *Mpsse) Tristate() int {
@@ -367,11 +451,15 @@ func (m *Mpsse) Tristate() int {
 }
 
 
+// Version returns the libmpsse version number.
+//
 // It is a wrapper for the mpsse C function:
 //     char Version(void);
 func Version() {}
 
 
+// Read reads data over the selected serial protocol.
+//
 // It is a wrapper for the mpsse C function:
 //     char *Read(struct mpsse_context *mpsse, int size);
 func (m *Mpsse) Read(size int) string {
@@ -379,21 +467,30 @@ func (m *Mpsse) Read(size int) string {
 }
 
 
+// Transfer reads and writes data over the selected serial protocol
+// (SPI only).
+//
 // It is a wrapper for the mpsse C function:
 //     char *Transfer(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Transfer() {}
 
 
+// FastWrite is a function for performing fast writes in MPSSE.
+//
 // It is a wrapper for the mpsse C function:
 //     int FastWrite(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) FastWrite() {}
 
 
+// FastRead is a function for performing fast reads in MPSSE.
+//
 // It is a wrapper for the mpsse C function:
 //     int FastRead(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) FastRead() {}
 
 
+// FastTransfer is a function to perform fast transfers in MPSSE.
+//
 // It is a wrapper for the mpsse C function:
 //     int FastTransfer(struct mpsse_context *mpsse, char *wdata, char *rdata, int size);
 func (m *Mpsse) FastTransfer() {}
