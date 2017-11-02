@@ -542,6 +542,14 @@ func Version() {}
 func (m *Mpsse) Read(size int) string {
 
 	resp := ""
+
+	// when reading, if a 0x00 value is found, it is taken to mean
+	// "empty" and nothing more is read. furthermore, that zero value
+	// does not translate to an actual byte value returned in the
+	// function return string. as such, we need to manually read the
+	// given number of times - if a result comes back as 0x00, we do
+	// not treat it as empty, but instead add it to the response string
+	// as the value \x00.
 	for i := 0; i < size; i++ {
 		read := C.GoString(C.Read(m.ctx, C.int(1)))
 		if read == "" {
@@ -550,7 +558,6 @@ func (m *Mpsse) Read(size int) string {
 			resp += read
 		}
 	}
-	fmt.Printf("libmpsse >> read[%v] response: %#v\n", size, resp)
 	return resp
 }
 
