@@ -544,11 +544,12 @@ func (m *Mpsse) Read(size int) string {
 	resp := ""
 	for i := 0; i < size; i++ {
 		read := C.GoString(C.Read(m.ctx, C.int(1)))
+		fmt.Printf("libmpsse >> reading [%v]: %#v\n", i, read)
 		if read == "" {
 			resp += "\x00"
 		}
 	}
-	fmt.Printf("libmpsse >> read response: %#v\n", resp)
+	fmt.Printf("libmpsse >> read[%v] response: %#v\n", size, resp)
 	return resp
 }
 
