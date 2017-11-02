@@ -3,7 +3,6 @@ package libmpsse
 import (
 	"sync"
 	"unsafe"
-	"fmt"
 )
 
 // #cgo pkg-config: libftdi
