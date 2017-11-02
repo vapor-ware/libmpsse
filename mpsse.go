@@ -3,6 +3,7 @@ package libmpsse
 import (
 	"sync"
 	"unsafe"
+	"fmt"
 )
 
 // #cgo pkg-config: libftdi
@@ -539,7 +540,10 @@ func Version() {}
 // It is a wrapper for the mpsse C function:
 //     char *Read(struct mpsse_context *mpsse, int size);
 func (m *Mpsse) Read(size int) string {
-	return C.GoString(C.Read(m.ctx, C.int(size)))
+	resp := C.Read(m.ctx, C.int(size))
+	fmt.Printf("libmpsse >> read response C: %#v\n", resp)
+	fmt.Printf("libmpsse >> read response Go: %#v\n", C.GoString(resp))
+	return C.GoString(resp)
 }
 
 
