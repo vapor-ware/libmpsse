@@ -4,6 +4,8 @@ dev:
 	-docker exec -it mpsse-dev /bin/bash
 	docker-compose -f compose.yml kill
 
+docker:
+	docker build -f build.Dockerfile -t vaporio/libmpsse-base .
 
 build:
 	cd src ; ./configure --disable-python

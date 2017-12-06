@@ -9,6 +9,7 @@ import (
 // #cgo CFLAGS: -I/usr/local/include/mpsse
 // #cgo LDFLAGS: -lmpsse -L/usr/local/lib
 // #include <stdio.h>
+// #include <stdlib.h>
 // #include "mpsse.h"
 import "C"
 
