@@ -8,6 +8,7 @@ docker:
 	docker build -f build.Dockerfile -t vaporio/libmpsse-base .
 
 build:
+	cd src ; make distclean
 	cd src ; ./configure --disable-python
 	cd src ; make
 	cd src ; make install
