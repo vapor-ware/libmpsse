@@ -12,7 +12,7 @@ build:
 	cd src ; ./configure --disable-python
 	cd src ; make
 	cd src ; make install
-	go build
+	#go build
 
 lint:
 	golint .

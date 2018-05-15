@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-// #cgo pkg-config: libftdi
+// #cgo pkg-config: libftdi1
 // #cgo CFLAGS: -I/usr/local/include/mpsse
 // #cgo LDFLAGS: -lmpsse -L/usr/local/lib
 // #include <stdio.h>
