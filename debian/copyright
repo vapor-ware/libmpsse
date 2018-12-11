@@ -1,0 +1,11 @@
+Files: *
+Copyright: 2017-2018 Vapor.io
+License: GPL-3
+
+Files: src/*
+Copyright: 2015 Craig Heffner
+License: BSD-2-clause
+
+Files: debian/*
+Copyright: 2018 Marco Ceppi
+License: Apache

@@ -1,0 +1,13 @@
+Source: libmpsse
+Section: libs
+Priority: optional
+Maintainer: Marco Ceppi <marco@vapor.io>
+Build-Depends: debhelper (>=9), libftdi-dev
+Standards-Version: 3.9.7
+Homepage: https://github.com/vapor-ware/libmpsse
+Vcs-Git: git://github.com/vapor-ware/libmpsse.git
+
+Package: libmpsse
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libftdi-dev
+Description: Open source library for SPI/I2C control via FTDI chips

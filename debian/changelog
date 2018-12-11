@@ -1,0 +1,5 @@
+libmpsse (1.4.0-1) cosmic; urgency=low
+
+  * Initial release of debian packaging
+
+ -- Marco Ceppi <marco@ceppi.net>  Wed, 12 Dec 2018 08:28:32 -0500

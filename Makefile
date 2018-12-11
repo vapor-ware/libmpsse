@@ -1,18 +1,24 @@
+#
+# libmpsse
+#
 
-dev:
-	docker-compose -f compose.yml up --build -d
-	-docker exec -it mpsse-dev /bin/bash
-	docker-compose -f compose.yml kill
-
-docker:
-	docker build -f build.Dockerfile -t vaporio/libmpsse-base .
-
-build:
-	cd src ; make distclean
+.PHONY: install
+install: ## Install the libmpsse package with python disabled
 	cd src ; ./configure --disable-python
 	cd src ; make
 	cd src ; make install
+	cd src ; make distclean
+
+.PHONY: build
+build: install ## Install the libmpsse package and run 'go build'
 	go build
 
-lint:
+.PHONY: lint
+lint: ## Lint the Go source code
 	golint .
+
+.PHONY: help
+help:  ## Print usage information
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+.DEFAULT_GOAL := help
