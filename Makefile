@@ -17,10 +17,10 @@ docker: ## Build the docker images
 
 .PHONY: install
 install: ## Install the libmpsse package with python disabled
-	cd src ; make distclean
 	cd src ; ./configure --disable-python
 	cd src ; make
 	cd src ; make install
+	cd src ; make distclean
 
 .PHONY: build
 build: install ## Install the libmpsse package and run 'go build'
