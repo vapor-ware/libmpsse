@@ -1,0 +1,31 @@
+#!/usr/bin/env groovy
+
+pipeline {
+
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build Images') {
+      steps {
+        sh 'make docker'
+      }
+    }
+
+    stage('Push Images') {
+      when {
+        branch 'master'
+      }
+      steps {
+        withDockerRegistry(registry: [credentialsId: 'vio-docker-hub']) {
+          sh 'make push-dockerhub'
+        }
+      }
+    }
+  }
+}
