@@ -1,6 +1,7 @@
 package libmpsse
 
 import (
+  "fmt"
 	"sync"
 	"unsafe"
 )
@@ -215,6 +216,8 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
 	C.Close(m.ctx)
+  // TODO: m = nil probably.
+  m = nil
 }
 
 
@@ -345,15 +348,21 @@ func (m *Mpsse) Start() error {
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) error {
+  fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
 	dataP := C.CString(data)
 	defer C.free(unsafe.Pointer(dataP))
 
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
 	// size we want? but I'm also unsure about that. will need to test.
+  // TODO: mhink Below seems correct.
 	status := int(C.Write(m.ctx, dataP, C.int(len(data))))
 
 	if !ok(status) {
+    // TODO: There could be a leak here. We may need to free the error string.
+    // We may not though since it's an ftdi pointer.
+    // TODO: Does not look like it, but the whole ctx should likely be closed.
+    fmt.Printf("mpsse Write FAILURE: %v\n", m.ErrorString())
 		return &MpsseError{m.ErrorString()}
 	}
 	return nil
