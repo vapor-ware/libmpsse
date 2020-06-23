@@ -227,6 +227,9 @@ func (m *Mpsse) Close() {
 //     const char *ErrorString(struct mpsse_context *mpsse);
 func (m *Mpsse) ErrorString() string {
 	return C.GoString(C.ErrorString(m.ctx))
+    //charPtr := C.Read(m.ctx, C.int(1))
+		//read := C.GoString(charPtr)
+		//C.free(unsafe.Pointer(charPtr))
 }
 
 
@@ -348,18 +351,20 @@ func (m *Mpsse) Start() error {
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) error {
-  fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
+  //fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
 	dataP := C.CString(data)
-	defer func() {
-    fmt.Printf("mpsse Write free\n")
-    C.free(unsafe.Pointer(dataP))
-  }()
+	//defer func() {
+  //  fmt.Printf("mpsse Write free\n")
+  //  C.free(unsafe.Pointer(dataP))
+  //}()
 
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
 	// size we want? but I'm also unsure about that. will need to test.
   // TODO: mhink Below seems correct.
 	status := int(C.Write(m.ctx, dataP, C.int(len(data))))
+
+  C.free(unsafe.Pointer(dataP)) // free whether we succeed or fail.
 
 	if !ok(status) {
     // TODO: There could be a leak here. We may need to free the error string.
