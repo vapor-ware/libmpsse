@@ -350,7 +350,10 @@ func (m *Mpsse) Start() error {
 func (m *Mpsse) Write(data string) error {
   fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
 	dataP := C.CString(data)
-	defer C.free(unsafe.Pointer(dataP))
+	defer func() {
+    fmt.Printf("mpsse Write free\n")
+    C.free(unsafe.Pointer(dataP))
+  }()
 
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
