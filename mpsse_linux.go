@@ -563,7 +563,10 @@ func (m *Mpsse) Read(size int) string {
 	// not treat it as empty, but instead add it to the response string
 	// as the value \x00.
 	for i := 0; i < size; i++ {
-		read := C.GoString(C.Read(m.ctx, C.int(1)))
+		//read := C.GoString(C.Read(m.ctx, C.int(1)))
+    charPtr = C.Read(m.ctx, C.int(1))
+		read := C.GoString(ptr)
+		C.free(unsafe.Pointer(charPtr))
 		if read == "" {
 			resp += "\x00"
 		} else {
