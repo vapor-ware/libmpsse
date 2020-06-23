@@ -564,8 +564,8 @@ func (m *Mpsse) Read(size int) string {
 	// as the value \x00.
 	for i := 0; i < size; i++ {
 		//read := C.GoString(C.Read(m.ctx, C.int(1)))
-    charPtr = C.Read(m.ctx, C.int(1))
-		read := C.GoString(ptr)
+    charPtr := C.Read(m.ctx, C.int(1))
+		read := C.GoString(charPtr)
 		C.free(unsafe.Pointer(charPtr))
 		if read == "" {
 			resp += "\x00"
