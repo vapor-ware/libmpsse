@@ -348,9 +348,6 @@ func (m *Mpsse) Write(data string) error {
 	dataP := C.CString(data)
 	defer C.free(unsafe.Pointer(dataP))
 
-  // TODO: mhink - short out underlying call for now to see if the malloc above is leaking.
-
-  /*
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
 	// size we want? but I'm also unsure about that. will need to test.
@@ -359,7 +356,6 @@ func (m *Mpsse) Write(data string) error {
 	if !ok(status) {
 		return &MpsseError{m.ErrorString()}
 	}
-  */
 	return nil
 }
 
