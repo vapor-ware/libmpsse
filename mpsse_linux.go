@@ -1,7 +1,7 @@
 package libmpsse
 
 import (
-  "fmt"
+	"fmt"
 	"sync"
 	"unsafe"
 )
@@ -14,7 +14,6 @@ import (
 // #include "mpsse.h"
 import "C"
 
-
 const (
 	// MpsseOK represents the "ok" response from an MPSSE command.
 	MpsseOK = 0
@@ -23,7 +22,6 @@ const (
 	MpsseFail = -1
 )
 
-
 // Mode is an integer that is used to identify the MPSSE operating
 // mode. The values here match the values in the C implementation
 // enum.
@@ -31,12 +29,12 @@ type Mode int
 
 // Supported MPSSE modes.
 const (
-	SPI0 Mode = 1
-	SPI1 Mode = 2
-	SPI2 Mode = 3
-	SPI3 Mode = 4
-	I2C  Mode = 5
-	GPIO Mode = 6
+	SPI0    Mode = 1
+	SPI1    Mode = 2
+	SPI2    Mode = 3
+	SPI3    Mode = 4
+	I2C     Mode = 5
+	GPIO    Mode = 6
 	BITBANG Mode = 7
 )
 
@@ -47,17 +45,17 @@ type Frequency int
 
 // Common clock rates.
 const (
-	OneHundredKHZ   Frequency = 100000
-	FourHundredKHZ  Frequency = 400000
-	OneMHZ          Frequency = 1000000
-	TwoMHZ          Frequency = 2000000
-	FiveMHZ         Frequency = 5000000
-	SixMHZ          Frequency = 6000000
-	TenMHZ          Frequency = 10000000
-	TwelveMHZ       Frequency = 12000000
-	FifteenMHZ      Frequency = 15000000
-	ThirtyMHZ       Frequency = 30000000
-	SixtyMHZ        Frequency = 60000000
+	OneHundredKHZ  Frequency = 100000
+	FourHundredKHZ Frequency = 400000
+	OneMHZ         Frequency = 1000000
+	TwoMHZ         Frequency = 2000000
+	FiveMHZ        Frequency = 5000000
+	SixMHZ         Frequency = 6000000
+	TenMHZ         Frequency = 10000000
+	TwelveMHZ      Frequency = 12000000
+	FifteenMHZ     Frequency = 15000000
+	ThirtyMHZ      Frequency = 30000000
+	SixtyMHZ       Frequency = 60000000
 )
 
 // Endianess defines how data is clocked in and out (MSB/LSB). These values
@@ -113,7 +111,6 @@ const (
 	InterfaceD   = 4
 )
 
-
 // Mpsse is a struct that holds the context information for an MPSSE session.
 // It holds a reference to the C context pointer that is used for all
 // commands.
@@ -123,13 +120,11 @@ type Mpsse struct {
 	lock sync.Mutex
 }
 
-
 // ok is a helper function to check if the response status of an MPSSE command
 // completed successfully.
 func ok(status int) bool {
 	return status == MpsseOK
 }
-
 
 // MPSSE opens and initializes the first FTDI device found.
 //
@@ -149,7 +144,6 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 	return d, nil
 }
 
-
 // Open opens a device by VID/PID.
 //
 // Since the C version is a wrapper around OpenIndex for index 0, we just pass
@@ -157,7 +151,6 @@ func MPSSE(mode Mode, frequency Frequency, endianess Endianess) (*Mpsse, error) 
 func Open(vid int, pid int, mode Mode, frequency Frequency, endianess Endianess, iface Iface, description *string, serial *string) (*Mpsse, error) {
 	return OpenIndex(vid, pid, mode, frequency, endianess, iface, description, serial, 0)
 }
-
 
 // OpenIndex opens a device by VID/PID/index.
 //
@@ -208,7 +201,6 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 	return d, nil
 }
 
-
 // Close closes the device, deinitializes libftdi, and frees the MPSSE
 // context pointer.
 //
@@ -216,10 +208,9 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
 	C.Close(m.ctx)
-  // TODO: m = nil probably.
-  m = nil
+	// TODO: m = nil probably.
+	m = nil
 }
-
 
 // ErrorString retrieves the last error string from libftdi.
 //
@@ -227,11 +218,10 @@ func (m *Mpsse) Close() {
 //     const char *ErrorString(struct mpsse_context *mpsse);
 func (m *Mpsse) ErrorString() string {
 	return C.GoString(C.ErrorString(m.ctx))
-    //charPtr := C.Read(m.ctx, C.int(1))
-		//read := C.GoString(charPtr)
-		//C.free(unsafe.Pointer(charPtr))
+	//charPtr := C.Read(m.ctx, C.int(1))
+	//read := C.GoString(charPtr)
+	//C.free(unsafe.Pointer(charPtr))
 }
-
 
 // SetMode sets the appropriate transmit and receive commands based on the
 // requested mode and byte order.
@@ -247,7 +237,6 @@ func (m *Mpsse) SetMode(endianess Endianess) error {
 	return nil
 }
 
-
 // EnableBitmode enables bit-wise data transfers. Must be called after
 // MPSSE() / Open() / OpenIndex().
 //
@@ -256,7 +245,6 @@ func (m *Mpsse) SetMode(endianess Endianess) error {
 func (m *Mpsse) EnableBitmode(tf int) {
 	C.EnableBitmode(m.ctx, C.int(tf))
 }
-
 
 // SetClock sets tha appropriate divisor for the desired clock frequency.
 //
@@ -271,7 +259,6 @@ func (m *Mpsse) SetClock(freq uint32) error {
 	return nil
 }
 
-
 // GetClock gets the currently configured clock rate.
 //
 // It is a wrapper for the mpsse C function:
@@ -279,7 +266,6 @@ func (m *Mpsse) SetClock(freq uint32) error {
 func (m *Mpsse) GetClock() int {
 	return int(C.GetClock(m.ctx))
 }
-
 
 // GetVid returns the vendor ID of the FTDI chip.
 //
@@ -289,7 +275,6 @@ func (m *Mpsse) GetVid() int {
 	return int(C.GetVid(m.ctx))
 }
 
-
 // GetPid returns the product ID of the FTDI chip.
 //
 // It is a wrapper for the mpsse C function:
@@ -298,7 +283,6 @@ func (m *Mpsse) GetPid() int {
 	return int(C.GetPid(m.ctx))
 }
 
-
 // GetDescription returns the description of the FTDI chip, if any.
 //
 // It is a wrapper for the mpsse C function:
@@ -306,7 +290,6 @@ func (m *Mpsse) GetPid() int {
 func (m *Mpsse) GetDescription() string {
 	return C.GoString(C.GetDescription(m.ctx))
 }
-
 
 // SetLoopback enables or disables internal loopback.
 //
@@ -321,7 +304,6 @@ func (m *Mpsse) SetLoopback(enable int) error {
 	return nil
 }
 
-
 // SetCSIdle sets the idle state of the chip select pin. CS idles high
 // by default.
 //
@@ -330,7 +312,6 @@ func (m *Mpsse) SetLoopback(enable int) error {
 func (m *Mpsse) SetCSIdle(idle int) {
 	C.SetCSIdle(m.ctx, C.int(idle))
 }
-
 
 // Start sends the data start condition.
 //
@@ -345,37 +326,35 @@ func (m *Mpsse) Start() error {
 	return nil
 }
 
-
 // Write sends data out via the selected serial protocol.
 //
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) error {
-  //fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
+	//fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
 	dataP := C.CString(data)
 	//defer func() {
-  //  fmt.Printf("mpsse Write free\n")
-  //  C.free(unsafe.Pointer(dataP))
-  //}()
+	//  fmt.Printf("mpsse Write free\n")
+	//  C.free(unsafe.Pointer(dataP))
+	//}()
 
 	// FIXME -- need to check that this works. not clear that len(data) gives
 	// us the size that we want. maybe unsafe.Sizeof will give the int
 	// size we want? but I'm also unsure about that. will need to test.
-  // TODO: mhink Below seems correct.
+	// TODO: mhink Below seems correct.
 	status := int(C.Write(m.ctx, dataP, C.int(len(data))))
 
-  C.free(unsafe.Pointer(dataP)) // free whether we succeed or fail.
+	C.free(unsafe.Pointer(dataP)) // free whether we succeed or fail.
 
 	if !ok(status) {
-    // TODO: There could be a leak here. We may need to free the error string.
-    // We may not though since it's an ftdi pointer.
-    // TODO: Does not look like it, but the whole ctx should likely be closed.
-    fmt.Printf("mpsse Write FAILURE: %v\n", m.ErrorString())
+		// TODO: There could be a leak here. We may need to free the error string.
+		// We may not though since it's an ftdi pointer.
+		// TODO: Does not look like it, but the whole ctx should likely be closed.
+		fmt.Printf("mpsse Write FAILURE: %v\n", m.ErrorString())
 		return &MpsseError{m.ErrorString()}
 	}
 	return nil
 }
-
 
 // Stop sends the data stop condition.
 //
@@ -390,7 +369,6 @@ func (m *Mpsse) Stop() error {
 	return nil
 }
 
-
 // GetAck returns the last received ACK bit.
 //
 // It is a wrapper for the mpsse C function:
@@ -399,7 +377,6 @@ func (m *Mpsse) GetAck() int {
 	return int(C.GetAck(m.ctx))
 }
 
-
 // SetAck sets the transmitted ACK bit.
 //
 // It is a wrapper for the mpsse C function:
@@ -407,7 +384,6 @@ func (m *Mpsse) GetAck() int {
 func (m *Mpsse) SetAck(ack I2CAck) {
 	C.SetAck(m.ctx, C.int(ack))
 }
-
 
 // SendAcks causes libmpsse to send ACKs after each read byte in
 // I2C mode.
@@ -418,7 +394,6 @@ func (m *Mpsse) SendAcks() {
 	C.SendAcks(m.ctx)
 }
 
-
 // SendNacks causes libmpsse to send NACKs after each read byte in
 // I2C mode.
 //
@@ -428,7 +403,6 @@ func (m *Mpsse) SendNacks() {
 	C.SendNacks(m.ctx)
 }
 
-
 // FlushAfterRead enables or disables flushing of the FTDI chip's RX
 // buffers after each read operation. Flushing is disabled by default.
 //
@@ -437,7 +411,6 @@ func (m *Mpsse) SendNacks() {
 func (m *Mpsse) FlushAfterRead(tf int) {
 	C.FlushAfterRead(m.ctx, C.int(tf))
 }
-
 
 // PinHigh sets the specified pin high.
 //
@@ -452,7 +425,6 @@ func (m *Mpsse) PinHigh(pin GPIOPin) error {
 	return nil
 }
 
-
 // PinLow sets the specified pin low.
 //
 // It is a wrapper for the mpsse C function:
@@ -465,7 +437,6 @@ func (m *Mpsse) PinLow(pin GPIOPin) error {
 	}
 	return nil
 }
-
 
 // SetDirection sets ths input/output direction of all pins. For use in
 // BITBANG mode only.
@@ -481,20 +452,17 @@ func (m *Mpsse) SetDirection(direction uint8) error {
 	return nil
 }
 
-
 // WriteBits performs a bit-wise write of up to 8 bits at a time.
 //
 // It is a wrapper for the mpsse C function:
 //     int WriteBits(struct mpsse_context *mpsse, char bits, int size);
 func (m *Mpsse) WriteBits() {}
 
-
 // ReadBits performs a bit-wise read of up to 8 bits.
 //
 // It is a wrapper for the mpsse C function:
 //     char ReadBits(struct mpsse_context *mpsse, int size);
 func (m *Mpsse) ReadBits() {}
-
 
 // WritePins sets the input/output value of all pins. For use in BITBANG
 // mode only.
@@ -510,7 +478,6 @@ func (m *Mpsse) WritePins(data uint8) error {
 	return nil
 }
 
-
 // ReadPins reads the state of the chip's pins. For use in BITBANG mode
 // only.
 //
@@ -520,7 +487,6 @@ func (m *Mpsse) ReadPins() int {
 	return int(C.ReadPins(m.ctx))
 }
 
-
 // PinState checks if a specific pin is high or low. For use in BITBANG
 // mode only.
 //
@@ -529,7 +495,6 @@ func (m *Mpsse) ReadPins() int {
 func (m *Mpsse) PinState(pin, state int) int {
 	return int(C.PinState(m.ctx, C.int(pin), C.int(state)))
 }
-
 
 // Tristate places all I/O pins into a tristate mode.
 //
@@ -544,13 +509,11 @@ func (m *Mpsse) Tristate() error {
 	return nil
 }
 
-
 // Version returns the libmpsse version number.
 //
 // It is a wrapper for the mpsse C function:
 //     char Version(void);
 func Version() {}
-
 
 // Read reads data over the selected serial protocol.
 //
@@ -569,7 +532,7 @@ func (m *Mpsse) Read(size int) string {
 	// as the value \x00.
 	for i := 0; i < size; i++ {
 		//read := C.GoString(C.Read(m.ctx, C.int(1)))
-    charPtr := C.Read(m.ctx, C.int(1))
+		charPtr := C.Read(m.ctx, C.int(1))
 		read := C.GoString(charPtr)
 		C.free(unsafe.Pointer(charPtr))
 		if read == "" {
@@ -581,7 +544,6 @@ func (m *Mpsse) Read(size int) string {
 	return resp
 }
 
-
 // Transfer reads and writes data over the selected serial protocol
 // (SPI only).
 //
@@ -589,20 +551,17 @@ func (m *Mpsse) Read(size int) string {
 //     char *Transfer(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Transfer() {}
 
-
 // FastWrite is a function for performing fast writes in MPSSE.
 //
 // It is a wrapper for the mpsse C function:
 //     int FastWrite(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) FastWrite() {}
 
-
 // FastRead is a function for performing fast reads in MPSSE.
 //
 // It is a wrapper for the mpsse C function:
 //     int FastRead(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) FastRead() {}
-
 
 // FastTransfer is a function to perform fast transfers in MPSSE.
 //
