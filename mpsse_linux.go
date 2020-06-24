@@ -207,7 +207,7 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
 	C.Close(m.ctx)
-	m = nil // Force panic if a client tries to use a deallocated / closed Mpsse.
+	m = nil // Force panic / error if a client tries to use a deallocated / closed Mpsse.
 }
 
 // ErrorString retrieves the last error string from libftdi.
