@@ -208,8 +208,7 @@ func OpenIndex(vid int, pid int, mode Mode, frequency Frequency, endianess Endia
 //     void Close(struct mpsse_context *mpsse);
 func (m *Mpsse) Close() {
 	C.Close(m.ctx)
-	// TODO: m = nil probably.
-	m = nil
+	m = nil // Force panic if a client tries to use a deallocated / closed Mpsse.
 }
 
 // ErrorString retrieves the last error string from libftdi.
@@ -218,9 +217,6 @@ func (m *Mpsse) Close() {
 //     const char *ErrorString(struct mpsse_context *mpsse);
 func (m *Mpsse) ErrorString() string {
 	return C.GoString(C.ErrorString(m.ctx))
-	//charPtr := C.Read(m.ctx, C.int(1))
-	//read := C.GoString(charPtr)
-	//C.free(unsafe.Pointer(charPtr))
 }
 
 // SetMode sets the appropriate transmit and receive commands based on the
@@ -331,25 +327,17 @@ func (m *Mpsse) Start() error {
 // It is a wrapper for the mpsse C function:
 //     int Write(struct mpsse_context *mpsse, char *data, int size);
 func (m *Mpsse) Write(data string) error {
-	//fmt.Printf("mpsse Write. data: %x, len(data): %d\n", data, len(data))
-	dataP := C.CString(data)
-	//defer func() {
-	//  fmt.Printf("mpsse Write free\n")
-	//  C.free(unsafe.Pointer(dataP))
-	//}()
 
-	// FIXME -- need to check that this works. not clear that len(data) gives
-	// us the size that we want. maybe unsafe.Sizeof will give the int
-	// size we want? but I'm also unsure about that. will need to test.
-	// TODO: mhink Below seems correct.
+	dataP := C.CString(data)
 	status := int(C.Write(m.ctx, dataP, C.int(len(data))))
 
-	C.free(unsafe.Pointer(dataP)) // free whether we succeed or fail.
+	// free whether we succeed or fail.
+	// DANGER: This free used to be called in a defer statement.
+	// The code was called because a trace in the code was emitted,
+	// but the memory was _not_ freed. Suspect a compiler bug.
+	C.free(unsafe.Pointer(dataP))
 
 	if !ok(status) {
-		// TODO: There could be a leak here. We may need to free the error string.
-		// We may not though since it's an ftdi pointer.
-		// TODO: Does not look like it, but the whole ctx should likely be closed.
 		fmt.Printf("mpsse Write FAILURE: %v\n", m.ErrorString())
 		return &MpsseError{m.ErrorString()}
 	}
@@ -530,8 +518,11 @@ func (m *Mpsse) Read(size int) string {
 	// given number of times - if a result comes back as 0x00, we do
 	// not treat it as empty, but instead add it to the response string
 	// as the value \x00.
+
+	// Above means that golang is treating "\x00" as an empty C
+	// null terminated string which makes sense. Here this is just
+	// bytes, and we want to keep the \x00 bytes.
 	for i := 0; i < size; i++ {
-		//read := C.GoString(C.Read(m.ctx, C.int(1)))
 		charPtr := C.Read(m.ctx, C.int(1))
 		read := C.GoString(charPtr)
 		C.free(unsafe.Pointer(charPtr))
