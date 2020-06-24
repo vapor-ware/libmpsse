@@ -1,7 +1,6 @@
 package libmpsse
 
 import (
-	"fmt"
 	"sync"
 	"unsafe"
 )
@@ -338,7 +337,6 @@ func (m *Mpsse) Write(data string) error {
 	C.free(unsafe.Pointer(dataP))
 
 	if !ok(status) {
-		fmt.Printf("mpsse Write FAILURE: %v\n", m.ErrorString())
 		return &MpsseError{m.ErrorString()}
 	}
 	return nil
